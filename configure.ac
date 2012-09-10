@@ -4,6 +4,8 @@
 AC_PREREQ([2.68])
 AC_INIT([ditw], [1.0.0], [Tommy.Reynolds@MegaCoder.com])
 
+AM_INIT_AUTOMAKE
+
 # Checks for programs.
 
 # Checks for libraries.
@@ -17,5 +19,6 @@ AC_INIT([ditw], [1.0.0], [Tommy.Reynolds@MegaCoder.com])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	ditw.spec
 ])
 AC_OUTPUT

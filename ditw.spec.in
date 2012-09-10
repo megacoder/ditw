@@ -1,0 +1,41 @@
+%define ver @VERSION@
+%define rel 1
+%define prefix /usr
+
+Prefix: %{prefix}
+
+Summary: Do it this way
+Name: ditw
+Version: %{ver}
+Release: %{rel}
+Source: http://ftp.megacoder.com/ditw/%{name}-%{ver}.tar.gz
+License: GPLv2
+URL: http://www.megacoder.com/
+Group: Applications/System
+Buildroot: %{_tmppath}/%{name}-root
+
+%description
+Do it this way
+
+%prep
+
+%setup -q
+%build
+	./configure --prefix=%{prefix}
+	make
+
+%install
+	rm -rf ${RPM_BUILD_ROOT}
+	make prefix=${RPM_BUILD_ROOT}%{prefix} install
+
+%clean
+	rm -rf ${RPM_BUILD_ROOT}
+
+%files
+%defattr(-,root,root)
+%doc AUTHORS COPYING README.md README.html README INSTALL NEWS LICENSE TODO
+%{_bindir}/%{name}
+
+%changelog
+* Tue May 16 2009 Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+- Booger
