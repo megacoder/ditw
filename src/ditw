@@ -22,6 +22,14 @@ def	which( program ):
 				return fpath
 	return None
 
+def	escape( s ):
+	for c in [ ' ', '\t', "'" ]:
+		if s.find( c ) > -1:
+			return '"%s"' % s
+	if s.find( '"' ) > -1:
+		return "'%s'" % s
+	return s
+
 if __name__ == '__main__':
 	histfile = os.path.join( os.path.expanduser( '~' ), '.ditwhist' )
 	try:
@@ -51,7 +59,8 @@ if __name__ == '__main__':
 		'funky-stuff'
 	)
 	for tokens in commands:
-		cmd = ' '.join( tokens )
-		print '  %s' % cmd
+		for i in xrange( 0, len(tokens) ):
+			tokens[i] = escape( tokens[i] )
+		print '  %s' % (' '.join(tokens))
 	print '  exit'
 	exit(0)
