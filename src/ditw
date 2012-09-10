@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
 import	os
-import	readline
 import	sys
-import	shlex
+import	optparse
 
 def	is_exe( fpath ):
 	return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -22,45 +21,84 @@ def	which( program ):
 				return fpath
 	return None
 
-def	escape( s ):
-	for c in [ ' ', '\t', "'" ]:
-		if s.find( c ) > -1:
-			return '"%s"' % s
-	if s.find( '"' ) > -1:
-		return "'%s'" % s
-	return s
-
 if __name__ == '__main__':
-	histfile = os.path.join( os.path.expanduser( '~' ), '.ditwhist' )
-	try:
-		readline.read_history_file( histfile )
-	except IOError:
-		pass
-	import	atexit
-	atexit.register( readline.write_history_file, histfile )
-	del	histfile
-	readline.parse_and_bind( 'tab: complete' )
+	parser = optparse.OptionParser()
+	user = 'root'
+	parser.add_option(
+		'-u',
+		'--user',
+		dest='user',
+		metavar='user',
+		help='whom to write script for; default="%s".' % user,
+		default=user
+	)
+	script = 'funky-stuff'
+	parser.add_option(
+		'-f',
+		'--file',
+		dest='script',
+		metavar='FILE',
+		help='script output; defaults to "%s".' % script,
+		default=script
+	)
+	parser.add_option(
+		'-o',
+		'--out',
+		dest='ofile',
+		metavar='FILE',
+		help='write to file; defaults to stdout.',
+		default=None
+	)
+	opt, args = parser.parse_args()
+	if opt.ofile:
+		try:
+			out = open( opt.ofile, 'wt' )
+		except Exception, e:
+			print >>sys.stder, 'Cannot open "%s" for writing.' % opt.ofile
+			exit(1)
+	else:
+		out = sys.stdout
+	interactive = os.isatty(0)
+	if interactive:
+		import	readline
+		histfile = os.path.join( os.path.expanduser( '~' ), '.ditwhist' )
+		try:
+			readline.read_history_file( histfile )
+		except IOError:
+			pass
+		import	atexit
+		atexit.register( readline.write_history_file, histfile )
+		del	histfile
+		readline.parse_and_bind( 'tab: complete' )
+		readline.set_history_length( 50 )
 	commands = []
-	as_root = True
+	role = '#'
 	while True:
 		try:
-			s = raw_input( '> ' )
+			if interactive:
+				s = raw_input( '> ' )
+			else:
+				s = raw_input()
 		except EOFError:
 			break
-		tokens = shlex.split( s )
-		if len(tokens) > 0:
-			prog = which( tokens[0] )
-			if prog:
-				tokens[0] = prog
-			commands.append( tokens )
-	print
-	print 'TERM=dumb /bin/script -q %s' % os.path.join(
-		os.path.expanduser( '~' ),
-		'funky-stuff'
+		if s.startswith( '#' ):
+			tokens = s[1:].split()
+			if len(tokens) > 0:
+				tokens[0] = which( tokens[0] )
+				commands.append( ' '.join(['#'] + tokens) )
+				role = '#'
+		elif s.startswith( '$' ):
+			commands.append( s )
+			role = '$'
+		else:
+			commands.append( s )
+	if interactive:
+		print
+	print >>out, 'TERM=dumb /bin/script -q %s' % os.path.join(
+		os.path.expanduser( '~%s' % opt.user ),
+		opt.script
 	)
-	for tokens in commands:
-		for i in xrange( 0, len(tokens) ):
-			tokens[i] = escape( tokens[i] )
-		print '  %s' % (' '.join(tokens))
-	print '  exit'
+	for command in commands:
+		print >>out, '  %s' % command
+	print >>out, '  %s exit' % role
 	exit(0)
