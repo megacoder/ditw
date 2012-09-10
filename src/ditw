@@ -1,3 +1,57 @@
 #!/usr/bin/python
 
-print 'Hello, World!'
+import	os
+import	readline
+import	sys
+import	shlex
+
+def	is_exe( fpath ):
+	return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+def	which( program ):
+	fpath, fname = os.path.split( program )
+	if fpath:
+		if is_exe( program ):
+			return program
+	else:
+		for path in os.environ['PATH'].split( os.pathsep ):
+			if path == '':
+				path = '.'
+			fpath = os.path.join( path, program )
+			if is_exe(fpath):
+				return fpath
+	return None
+
+if __name__ == '__main__':
+	histfile = os.path.join( os.path.expanduser( '~' ), '.ditwhist' )
+	try:
+		readline.read_history_file( histfile )
+	except IOError:
+		pass
+	import	atexit
+	atexit.register( readline.write_history_file, histfile )
+	del	histfile
+	readline.parse_and_bind( 'tab: complete' )
+	commands = []
+	as_root = True
+	while True:
+		try:
+			s = raw_input( '> ' )
+		except EOFError:
+			break
+		tokens = shlex.split( s )
+		if len(tokens) > 0:
+			prog = which( tokens[0] )
+			if prog:
+				tokens[0] = prog
+			commands.append( tokens )
+	print
+	print 'TERM=dumb /bin/script -q %s' % os.path.join(
+		os.path.expanduser( '~' ),
+		'funky-stuff'
+	)
+	for tokens in commands:
+		cmd = ' '.join( tokens )
+		print '  %s' % cmd
+	print '  exit'
+	exit(0)
