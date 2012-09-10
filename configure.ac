@@ -14,5 +14,8 @@ AC_INIT([ditw], [1.0.0], [Tommy.Reynolds@MegaCoder.com])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([
+	Makefile
+	src/Makefile
+])
 AC_OUTPUT
