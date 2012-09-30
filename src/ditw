@@ -4,22 +4,26 @@ import	os
 import	sys
 import	optparse
 
-def	is_exe( fpath ):
-	return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+def	is_exe( filename ):
+	return os.path.isfile(filename) and os.access(filename, os.X_OK)
 
 def	which( program ):
-	fpath, fname = os.path.split( program )
-	if fpath:
-		if is_exe( program ):
-			return program
+	found = False
+	if program.find( os.pathsep ) > -1:
+		# Absolute or relative path is absolutely used as-is
+		found = is_exe( program )
 	else:
 		for path in os.environ['PATH'].split( os.pathsep ):
 			if path == '':
 				path = '.'
-			fpath = os.path.join( path, program )
-			if is_exe(fpath):
-				return fpath
-	return None
+			fpath = os.path.join( os.path.expanduser(path), program )
+			found = is_exe(fpath)
+			if found:
+				program = fpath
+				break
+	if not found:
+		print '  # Could not find "%s"!' % program
+	return program
 
 if __name__ == '__main__':
 	parser = optparse.OptionParser()
@@ -72,7 +76,7 @@ if __name__ == '__main__':
 		readline.parse_and_bind( 'tab: complete' )
 		readline.set_history_length( 50 )
 	commands = []
-	role = '#'
+	as_root = True
 	while True:
 		try:
 			if interactive:
@@ -81,24 +85,30 @@ if __name__ == '__main__':
 				s = raw_input()
 		except EOFError:
 			break
-		if s.startswith( '#' ):
-			tokens = s[1:].split()
-			if len(tokens) > 0:
-				tokens[0] = which( tokens[0] )
-				commands.append( ' '.join(['#'] + tokens) )
-				role = '#'
-		elif s.startswith( '$' ):
-			commands.append( s )
-			role = '$'
+		if s.startswith( '!' ):
+			commands.append( '# ' + s[1:].strip() )
 		else:
-			commands.append( s )
+			if s.startswith( '#' ):
+				as_root = True
+				s = s[1:].strip()
+			elif s.startswith( '$' ):
+				as_root = False
+				s = s[1:].strip()
+			tokens = s.split()
+			if len(tokens) == 0: continue
+			if as_root:
+				tokens[0] = which( tokens[0] )
+			commands.append( ' '.join( tokens ) )
 	if interactive:
 		print
+	print >>out, '# This command will open a new shell to be logged.'
 	print >>out, 'TERM=dumb /bin/script -q %s' % os.path.join(
 		os.path.expanduser( '~%s' % opt.user ),
 		opt.script
 	)
 	for command in commands:
 		print >>out, '  %s' % command
-	print >>out, '  %s exit' % role
+	print >>out,'  # The output file is created by this command.'
+	print >>out,'  # Do not leave it off, it closes the created shell.'
+	print >>out, '  exit'
 	exit(0)
