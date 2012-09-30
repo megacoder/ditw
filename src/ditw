@@ -106,6 +106,7 @@ if __name__ == '__main__':
 		os.path.expanduser( '~%s' % opt.user ),
 		opt.script
 	)
+	print >>out, '  # Type these commands after the new prompt.'
 	for command in commands:
 		print >>out, '  %s' % command
 	print >>out,'  # The output file is created by this command.'
