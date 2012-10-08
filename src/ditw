@@ -101,16 +101,18 @@ if __name__ == '__main__':
 			commands.append( ' '.join( tokens ) )
 	if interactive:
 		print
-	print >>out, '# This command will open a new shell to be logged.'
+	print >>out, 'This command will open a new shell to be logged.'
 	script = os.path.join(
 		os.path.expanduser( '~%s' % opt.user ),
 		opt.script
 	)
+	print >>out
 	print >>out, 'TERM=dumb /bin/script -q %s' % script
 	for command in commands:
 		print >>out, '  %s' % command
 	print >>out,'  # The output file is created by this command.'
 	print >>out,'  # Do not leave it off, it closes the created shell.'
 	print >>out, '  exit'
-	print >>out,'  # Once this is done, please upload "%s" to the SR.' % script
+	print >>out
+	print >>out,'Once this is done, please upload "%s" to the SR.' % script
 	exit(0)
